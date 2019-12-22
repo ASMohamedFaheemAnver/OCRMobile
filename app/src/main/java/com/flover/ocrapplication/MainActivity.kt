@@ -1,7 +1,6 @@
 package com.flover.ocrapplication
 
 import android.app.Activity
-import android.app.Dialog
 import android.app.ProgressDialog
 import android.content.ContentUris
 import android.content.Context
@@ -30,6 +29,8 @@ class MainActivity : AppCompatActivity() {
     private val localhost : String = "192.168.1.101"
     private lateinit var textView : TextView
     private lateinit var progressDialog : ProgressDialog
+    private lateinit var path: String
+    private lateinit var string: String
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -50,11 +51,42 @@ class MainActivity : AppCompatActivity() {
             startActivity(intent)
         }
 
+        findViewById<Button>(R.id.upload_result_btn).setOnClickListener {
+            var client = SyncHttpClient()
+            var params = RequestParams()
+            params.put("image", File(path), path?.let { getContentType(it) })
+            params.put("result", string)
+
+            Thread{
+                Looper.prepare()
+                client.post("http://$localhost:3000/api/results", params, object : TextHttpResponseHandler(){
+                    override fun onSuccess(
+                        statusCode: Int,
+                        headers: Array<out Header>?,
+                        responseString: String?
+                    ) {
+                        println(responseString)
+                    }
+
+                    override fun onFailure(
+                        statusCode: Int,
+                        headers: Array<out Header>?,
+                        responseString: String?,
+                        throwable: Throwable?
+                    ) {
+                        println(responseString)
+                    }
+                })
+                Looper.loop()
+            }.start()
+        }
+
         textView = findViewById(R.id.show_result)
         textView.text = ""
         progressDialog = ProgressDialog(this)
-        progressDialog.setTitle("Loading!")
-        progressDialog.setMessage("Wait for nodeJS!")
+        progressDialog.setTitle("LOADING!")
+        progressDialog.setMessage("WAITING FOR SERVER RESPONSE!")
+        progressDialog.setCanceledOnTouchOutside(false)
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -66,12 +98,13 @@ class MainActivity : AppCompatActivity() {
             var client = SyncHttpClient()
             var params = RequestParams()
 
-            var path = uri?.let { getPath(baseContext, it) }
+            path = uri?.let { getPath(baseContext, it) }!!
 
             params.put("image", File(path), path?.let { getContentType(it) })
             // params.put("result", "GOOGLE!")
             client.connectTimeout = 60000
             client.responseTimeout = 120000
+
             Thread{
                 Looper.prepare()
                 client.post("http://$localhost:3000/api/result", params, object : TextHttpResponseHandler(){
@@ -81,7 +114,7 @@ class MainActivity : AppCompatActivity() {
                         responseString: String?
                     ) {
                         val json = JSONObject(responseString)
-                        var string = json["image_text"].toString()
+                        string = json["image_text"].toString()
                         this@MainActivity.runOnUiThread {
                             textView.text = string
                             progressDialog.dismiss()
@@ -99,8 +132,6 @@ class MainActivity : AppCompatActivity() {
                 })
                 Looper.loop()
             }.start()
-
-
         }
     }
 
