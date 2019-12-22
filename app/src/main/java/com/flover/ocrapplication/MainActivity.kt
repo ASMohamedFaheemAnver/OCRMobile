@@ -6,7 +6,6 @@ import android.content.ContentUris
 import android.content.Context
 import android.content.Intent
 import android.database.Cursor
-import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -22,16 +21,13 @@ import com.loopj.android.http.RequestParams
 import com.loopj.android.http.SyncHttpClient
 import com.loopj.android.http.TextHttpResponseHandler
 import com.theartofdev.edmodo.cropper.CropImage
-import com.theartofdev.edmodo.cropper.CropImageView
 import cz.msebera.android.httpclient.Header
 import org.json.JSONObject
-import java.io.ByteArrayOutputStream
 import java.io.File
-import java.security.AccessController.getContext
 
 
 class MainActivity : AppCompatActivity() {
-    private val localhost : String = "192.168.1.101"
+    private val localhost : String = OCRData.localhost
     private lateinit var textView : TextView
     private lateinit var progressDialog : ProgressDialog
     private lateinit var path: String
@@ -64,7 +60,7 @@ class MainActivity : AppCompatActivity() {
 
             Thread{
                 Looper.prepare()
-                client.post("http://$localhost:3000/api/results", params, object : TextHttpResponseHandler(){
+                client.post(OCRData.uploadPostUrl, params, object : TextHttpResponseHandler(){
                     override fun onSuccess(
                         statusCode: Int,
                         headers: Array<out Header>?,
@@ -117,7 +113,7 @@ class MainActivity : AppCompatActivity() {
 
             Thread{
                 Looper.prepare()
-                client.post("http://$localhost:3000/api/result", params, object : TextHttpResponseHandler(){
+                client.post(OCRData.ocrPostUrl, params, object : TextHttpResponseHandler(){
                     override fun onSuccess(
                         statusCode: Int,
                         headers: Array<out Header>?,
@@ -163,7 +159,7 @@ class MainActivity : AppCompatActivity() {
 
             Thread{
                 Looper.prepare()
-                client.post("http://$localhost:3000/api/result", params, object : TextHttpResponseHandler(){
+                client.post(OCRData.ocrPostUrl, params, object : TextHttpResponseHandler(){
                     override fun onSuccess(
                         statusCode: Int,
                         headers: Array<out Header>?,
@@ -189,16 +185,6 @@ class MainActivity : AppCompatActivity() {
                 Looper.loop()
             }.start()
         }else if(requestCode==2&&resultCode== Activity.RESULT_OK&&data!=null){
-//            var cropIntent = Intent("com.android.camera.action.CROP")
-//            cropIntent.setDataAndType(data?.data, "image/*")
-//            cropIntent.putExtra("crop", true)
-//            intent.putExtra("outputX", 512)
-//            intent.putExtra("outputY", 512)
-//            intent.putExtra("aspectX", 1)
-//            intent.putExtra("aspectY", 1)
-//            cropIntent.putExtra("return-data", true)
-//            startActivityForResult(cropIntent, 3)
-
             CropImage.activity(data?.data)
                 .start(this)
 

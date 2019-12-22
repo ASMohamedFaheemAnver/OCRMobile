@@ -12,7 +12,7 @@ import org.json.JSONArray
 
 class ResultsActivity : AppCompatActivity() {
 
-    private val localhost : String = "192.168.1.101"
+    private val localhost : String = OCRData.localhost
 
     private var imageUrl  : ArrayList<String> = ArrayList()
     private var imageResult  : ArrayList<String> = ArrayList()
@@ -30,7 +30,7 @@ class ResultsActivity : AppCompatActivity() {
     }
 
     private fun getHttp(){
-        val httpAsync = "http://$localhost:3000/api/image_results"
+        val httpAsync = OCRData.getUrl
             .httpGet().responseString{_, _, result ->
                 when(result){
                     is Result.Failure -> {
