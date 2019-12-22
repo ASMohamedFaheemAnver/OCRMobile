@@ -1,6 +1,8 @@
 package com.flover.ocrapplication
 
 import android.app.Activity
+import android.app.Dialog
+import android.app.ProgressDialog
 import android.content.ContentUris
 import android.content.Context
 import android.content.Intent
@@ -14,16 +16,20 @@ import android.provider.DocumentsContract
 import android.provider.MediaStore
 import android.widget.Button
 import android.widget.ImageView
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import com.loopj.android.http.RequestParams
 import com.loopj.android.http.SyncHttpClient
 import com.loopj.android.http.TextHttpResponseHandler
 import cz.msebera.android.httpclient.Header
+import org.json.JSONObject
 import java.io.File
 
 
 class MainActivity : AppCompatActivity() {
-    private val localhost : String = "192.168.1.100"
+    private val localhost : String = "192.168.1.101"
+    private lateinit var textView : TextView
+    private lateinit var progressDialog : ProgressDialog
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -31,7 +37,7 @@ class MainActivity : AppCompatActivity() {
 
 
 
-        findViewById<ImageView>(R.id.add_image).setOnClickListener {
+        findViewById<ImageView>(R.id.uploaded_image).setOnClickListener {
             var galleryIntent = Intent()
             galleryIntent.action = Intent.ACTION_GET_CONTENT
             galleryIntent.type = "image/*"
@@ -44,12 +50,18 @@ class MainActivity : AppCompatActivity() {
             startActivity(intent)
         }
 
+        textView = findViewById(R.id.show_result)
+        textView.text = ""
+        progressDialog = ProgressDialog(this)
+        progressDialog.setTitle("Loading!")
+        progressDialog.setMessage("Wait for nodeJS!")
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        progressDialog.show()
         if (requestCode==1&&resultCode== Activity.RESULT_OK&&data!=null){
             var uri: Uri? = data.data
-            findViewById<ImageView>(R.id.add_image).setImageURI(uri)
+            findViewById<ImageView>(R.id.uploaded_image).setImageURI(uri)
 
             var client = SyncHttpClient()
             var params = RequestParams()
@@ -58,7 +70,8 @@ class MainActivity : AppCompatActivity() {
 
             params.put("image", File(path), path?.let { getContentType(it) })
             // params.put("result", "GOOGLE!")
-
+            client.connectTimeout = 60000
+            client.responseTimeout = 120000
             Thread{
                 Looper.prepare()
                 client.post("http://$localhost:3000/api/result", params, object : TextHttpResponseHandler(){
@@ -67,7 +80,12 @@ class MainActivity : AppCompatActivity() {
                         headers: Array<out Header>?,
                         responseString: String?
                     ) {
-                        println(responseString)
+                        val json = JSONObject(responseString)
+                        var string = json["image_text"].toString()
+                        this@MainActivity.runOnUiThread {
+                            textView.text = string
+                            progressDialog.dismiss()
+                        }
                     }
 
                     override fun onFailure(
