@@ -12,7 +12,7 @@ import org.json.JSONArray
 
 class ResultsActivity : AppCompatActivity() {
 
-    private val localhost : String = "192.168.1.103"
+    private val localhost : String = "192.168.1.100"
 
     private var imageUrl  : ArrayList<String> = ArrayList()
     private var imageResult  : ArrayList<String> = ArrayList()

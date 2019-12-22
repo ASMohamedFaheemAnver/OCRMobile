@@ -1,27 +1,29 @@
 package com.flover.ocrapplication
 
 import android.app.Activity
+import android.content.ContentUris
+import android.content.Context
 import android.content.Intent
+import android.database.Cursor
 import android.net.Uri
-import androidx.appcompat.app.AppCompatActivity
+import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.os.Looper
+import android.provider.DocumentsContract
+import android.provider.MediaStore
 import android.widget.Button
 import android.widget.ImageView
-import android.widget.Toast
-import androidx.core.net.toFile
-import com.loopj.android.http.AsyncHttpResponseHandler
+import androidx.appcompat.app.AppCompatActivity
 import com.loopj.android.http.RequestParams
 import com.loopj.android.http.SyncHttpClient
 import com.loopj.android.http.TextHttpResponseHandler
 import cz.msebera.android.httpclient.Header
 import java.io.File
-import java.net.URI
-import java.net.URL
+
 
 class MainActivity : AppCompatActivity() {
-    private val localhost : String = "192.168.1.102"
+    private val localhost : String = "192.168.1.100"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -52,37 +54,125 @@ class MainActivity : AppCompatActivity() {
             var client = SyncHttpClient()
             var params = RequestParams()
 
-//            var path = Environment.getExternalStorageDirectory().toString() + uri?.path
-//            var file = File(path)
-//            println(path)
+            var path = uri?.let { getPath(baseContext, it) }
 
-
-            params.put("image", "SOMETHING")
-            params.put("result", "GOOGLE!")
+            params.put("image", File(path), path?.let { getContentType(it) })
+            // params.put("result", "GOOGLE!")
 
             Thread{
                 Looper.prepare()
-                client.post("http://$localhost:3000/api/results", params, object : AsyncHttpResponseHandler(){
+                client.post("http://$localhost:3000/api/result", params, object : TextHttpResponseHandler(){
                     override fun onSuccess(
                         statusCode: Int,
                         headers: Array<out Header>?,
-                        responseBody: ByteArray?
+                        responseString: String?
                     ) {
-
+                        println(responseString)
                     }
 
                     override fun onFailure(
                         statusCode: Int,
                         headers: Array<out Header>?,
-                        responseBody: ByteArray?,
-                        error: Throwable?
+                        responseString: String?,
+                        throwable: Throwable?
                     ) {
-
+                        println(responseString)
                     }
-
                 })
                 Looper.loop()
             }.start()
+
+
         }
     }
+
+    private fun getPath(context: Context?, uri: Uri): String? {
+        val isKitKat = Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT
+        // DocumentProvider
+        if (isKitKat && DocumentsContract.isDocumentUri(context, uri)) { // ExternalStorageProvider
+            if (isExternalStorageDocument(uri)) {
+                val docId = DocumentsContract.getDocumentId(uri)
+                val split = docId.split(":").toTypedArray()
+                val type = split[0]
+                if ("primary".equals(type, ignoreCase = true)) {
+                    return Environment.getExternalStorageDirectory().toString() + "/" + split[1]
+                }
+            } else if (isDownloadsDocument(uri)) {
+                val id = DocumentsContract.getDocumentId(uri)
+                val contentUri = ContentUris.withAppendedId(
+                    Uri.parse("content://downloads/public_downloads"),
+                    java.lang.Long.valueOf(id)
+                )
+                return context?.let { getDataColumn(it, contentUri, null, null) }
+            } else if (isMediaDocument(uri)) {
+                val docId = DocumentsContract.getDocumentId(uri)
+                val split = docId.split(":").toTypedArray()
+                val type = split[0]
+                var contentUri: Uri? = null
+                if ("image" == type) {
+                    contentUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI
+                } else if ("video" == type) {
+                    contentUri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI
+                } else if ("audio" == type) {
+                    contentUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
+                }
+                val selection = "_id=?"
+                val selectionArgs = arrayOf(
+                    split[1]
+                )
+                return context?.let { getDataColumn(it, contentUri, selection, selectionArgs) }
+            }
+        } else if ("content".equals(uri.scheme, ignoreCase = true)) {
+            return context?.let { getDataColumn(it, uri, null, null) }
+        } else if ("file".equals(uri.scheme, ignoreCase = true)) {
+            return uri.path
+        }
+        return null
+    }
+
+    private fun getDataColumn(
+        context: Context, uri: Uri?, selection: String?,
+        selectionArgs: Array<String>?
+    ): String? {
+        var cursor: Cursor? = null
+        val column = "_data"
+        val projection = arrayOf(
+            column
+        )
+        try {
+            cursor = context.contentResolver.query(
+                uri!!, projection, selection, selectionArgs,
+                null
+            )
+            if (cursor != null && cursor.moveToFirst()) {
+                val columnIndex: Int = cursor.getColumnIndexOrThrow(column)
+                return cursor.getString(columnIndex)
+            }
+        } finally {
+            cursor?.close()
+        }
+        return null
+    }
+
+    private fun isExternalStorageDocument(uri: Uri): Boolean {
+        return "com.android.externalstorage.documents" == uri.authority
+    }
+
+    private fun isDownloadsDocument(uri: Uri): Boolean {
+        return "com.android.providers.downloads.documents" == uri.authority
+    }
+
+    private fun isMediaDocument(uri: Uri): Boolean {
+        return "com.android.providers.media.documents" == uri.authority
+    }
+
+    private fun getContentType(path: String) : String{
+        if (path.endsWith("png")){
+            return "image/png"
+        }else if(path.endsWith("jpg")){
+            return "image/jpg"
+        }
+        return "err"
+    }
+
 }
