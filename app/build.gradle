@@ -38,5 +38,5 @@ dependencies {
     implementation 'com.google.code.gson:gson:2.8.6'
     implementation 'com.github.bumptech.glide:glide:4.9.0'
     implementation 'com.loopj.android:android-async-http:1.4.10'
-    implementation 'com.github.kittinunf.fuel:fuel:2.2.1'
+    api 'com.theartofdev.edmodo:android-image-cropper:2.8.+'
 }
