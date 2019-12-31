@@ -6,6 +6,7 @@ import android.widget.Button
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.flover.ocrapplication.adapter.RecyclerViewAdapter
+import com.flover.ocrapplication.data.OCRData
 import com.github.kittinunf.fuel.httpGet
 import com.github.kittinunf.result.Result
 import org.json.JSONArray
