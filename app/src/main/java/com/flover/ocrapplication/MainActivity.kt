@@ -39,7 +39,7 @@ class MainActivity : AppCompatActivity() {
 
         findViewById<Button>(R.id.upload_result_btn).setOnClickListener {
             progressDialog.show()
-            PostMan.postData(progressDialog)
+            PostMan.postData(progressDialog, this)
         }
 
         findViewById<Button>(R.id.camera_btn).setOnClickListener {

@@ -3,6 +3,7 @@ package com.flover.ocrapplication
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Button
+import android.widget.Toast
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.flover.ocrapplication.adapter.RecyclerViewAdapter
@@ -35,8 +36,9 @@ class ResultsActivity : AppCompatActivity() {
             .httpGet().responseString{_, _, result ->
                 when(result){
                     is Result.Failure -> {
-                        val ex = result.getException()
-                        println(ex)
+                        this@ResultsActivity.runOnUiThread{
+                            Toast.makeText(this, "SERVER DOWN!", Toast.LENGTH_SHORT).show()
+                        }
                     }
                     is Result.Success -> {
                         val data = result.get()

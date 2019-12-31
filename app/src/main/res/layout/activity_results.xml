@@ -20,5 +20,6 @@
         android:layout_marginBottom="10dp"
         android:layout_marginLeft="20dp"
         android:layout_marginRight="20dp"
+        android:textColorHint="@android:color/white"
         android:layout_alignParentBottom="true"/>
 </RelativeLayout>
